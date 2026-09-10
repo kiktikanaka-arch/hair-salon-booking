@@ -1,12 +1,3 @@
-import streamlit as st
-from datetime import datetime
-
-# ตั้งค่าหน้าตาของเว็บ
-st.set_page_config(page_title="ระบบจองร้านตัดผม", page_icon="✂️")
-
-st.title("✂️ ระบบจองคิวร้านตัดผม")
-
-# สร้างส่วนจำลองฐานข้อมูลเก็บรายการจอง
 if "bookings" not in st.session_state:
     st.session_state.bookings = []
 
