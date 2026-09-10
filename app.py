@@ -1,138 +1,43 @@
-from flask import Flask, request, redirect, render_template_string
+import streamlit as st
 from datetime import datetime
 
-app = Flask(__name__)
+# ตั้งค่าหน้าตาของเว็บ
+st.set_page_config(page_title="ระบบจองร้านตัดผม", page_icon="✂️")
 
-bookings = []
+st.title("✂️ ระบบจองคิวร้านตัดผม")
 
-HTML = """
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ร้านทำผม</title>
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background:#fff0f6;
-    margin:0;
-    padding:20px;
-}
-.container {
-    max-width:600px;
-    margin:auto;
-    background:white;
-    padding:25px;
-    border-radius:20px;
-    box-shadow:0 4px 15px #ddd;
-}
-h1 {
-    text-align:center;
-    color:#d63384;
-}
-label {
-    display:block;
-    margin-top:15px;
-    font-weight:bold;
-}
-input, select, button {
-    width:100%;
-    padding:12px;
-    margin-top:6px;
-    box-sizing:border-box;
-    border-radius:10px;
-    border:1px solid #ccc;
-}
-button {
-    margin-top:20px;
-    background:#d63384;
-    color:white;
-    border:none;
-    font-size:16px;
-}
-.card {
-    background:#fff5fa;
-    padding:15px;
-    margin-top:15px;
-    border-radius:12px;
-}
-</style>
-</head>
+# สร้างส่วนจำลองฐานข้อมูลเก็บรายการจอง
+if "bookings" not in st.session_state:
+    st.session_state.bookings = []
 
-<body>
-<div class="container">
+# ฟอร์มรับข้อมูลการจอง
+with st.form("booking_form"):
+    name = st.text_input("ชื่อผู้จอง")
+    service = st.selectbox("เลือกบริการ", ["ตัดผมชาย", "ตัดผมหญิง", "สระ-ไดร์", "ทำสีผม"])
+    date = st.date_input("วันที่ต้องการจอง", min_value=datetime.today())
+    time = st.time_input("เวลาที่ต้องการจอง")
+    
+    submitted = st.form_submit_button("ยืนยันการจอง")
+    
+    if submitted:
+        if name.strip() == "":
+            st.error("กรุณากรอกชื่อผู้จอง")
+        else:
+            booking_info = {
+                "name": name,
+                "service": service,
+                "date": str(date),
+                "time": str(time)
+            }
+            st.session_state.bookings.append(booking_info)
+            st.success(f"จองคิวสำเร็จแล้วสำหรับคุณ {name}!")
 
-<h1>💇 ร้านจองคิวทำผม</h1>
+# แสดงรายการคิวที่ถูกจองแล้ว
+st.divider()
+st.subheader("📋 รายการคิวที่จองแล้ว")
 
-<form method="POST">
-
-<label>ชื่อลูกค้า</label>
-<input name="name" required>
-
-<label>เบอร์โทรศัพท์</label>
-<input name="phone" required>
-
-<label>บริการ</label>
-<select name="service">
-<option>ตัดผม</option>
-<option>สระ + ไดร์</option>
-<option>ย้อมผม</option>
-<option>ดัดผม</option>
-<option>ทรีตเมนต์</option>
-</select>
-
-<label>ช่าง</label>
-<select name="staff">
-<option>ช่างคนที่ 1</option>
-<option>ช่างคนที่ 2</option>
-<option>ช่างคนที่ 3</option>
-</select>
-
-<label>วันที่</label>
-<input type="date" name="date" required>
-
-<label>เวลา</label>
-<input type="time" name="time" required>
-
-<button type="submit">📅 จองคิว</button>
-
-</form>
-
-<h2>📋 รายการจอง</h2>
-
-{% for b in bookings %}
-<div class="card">
-<b>👤 {{b.name}}</b><br>
-📞 {{b.phone}}<br>
-💇 {{b.service}}<br>
-👩‍🦰 {{b.staff}}<br>
-📅 {{b.date}} เวลา {{b.time}}
-</div>
-{% else %}
-<p>ยังไม่มีรายการจอง</p>
-{% endfor %}
-
-</div>
-</body>
-</html>
-"""
-
-@app.route("/", methods=["GET", "POST"])
-def home():
-    if request.method == "POST":
-        bookings.append({
-            "name": request.form["name"],
-            "phone": request.form["phone"],
-            "service": request.form["service"],
-            "staff": request.form["staff"],
-            "date": request.form["date"],
-            "time": request.form["time"],
-            "created": datetime.now().isoformat()
-        })
-        return redirect("/")
-
-    return render_template_string(HTML, bookings=bookings)
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860)
+if st.session_state.bookings:
+    for idx, b in enumerate(st.session_state.bookings, 1):
+        st.write(f"**{idx}. คุณ {b['name']}** - บริการ: {b['service']} | วันที่: {b['date']} เวลา: {b['time']}")
+else:
+    st.info("ยังไม่มีข้อมูลการจองในขณะนี้")
